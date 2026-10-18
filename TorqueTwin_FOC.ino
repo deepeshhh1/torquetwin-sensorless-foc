@@ -458,47 +458,6 @@ void setup() {
 }
 
 void loop() {
-  Serial.begin(115200);
-  analogReadResolution(12);
-  pinMode(DRV_EN_PIN, OUTPUT);
-  digitalWrite(DRV_EN_PIN, LOW);
-
-  ledcSetup(PWM_CH_A, PWM_FREQ, PWM_RES_BITS); ledcAttachPin(PWM_A_PIN, PWM_CH_A);
-  ledcSetup(PWM_CH_B, PWM_FREQ, PWM_RES_BITS); ledcAttachPin(PWM_B_PIN, PWM_CH_B);
-  ledcSetup(PWM_CH_C, PWM_FREQ, PWM_RES_BITS); ledcAttachPin(PWM_C_PIN, PWM_CH_C);
-  pwmOff();
-
-  // Boot calibration: driver is disabled and PWM is at zero,
-  // so the current channels carry no real current - what is
-  // measured here is each sensor's true zero offset.
-  calibrateCurrentOffsets();
-
-  // Echo the loaded motor model once, so every log/diagnostic
-  // session records exactly which machine the observer and
-  // the twin were tuned for.
-  logEvent("Motor: Rs=" + String(M.Rs, 2) + " ohm, Ld=Lq=" +
-           String(M.Ld * 1000.0f, 2) + " mH, flux=" +
-           String(M.flux, 4) + " Wb, p=" + String(M.polePairs) +
-           ", rated " + String(M.ratedA, 0) + " A");
-
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  unsigned long t0 = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - t0 < 8000) delay(300);
-  if (WiFi.status() == WL_CONNECTED) {
-    server.on("/", handleRoot);
-    server.on("/data", handleData);
-    server.on("/cmd", handleCmd);
-    server.begin();
-    logEvent("Dashboard: http://" + WiFi.localIP().toString());
-  }
-
-  // Control timer starts LAST: from this point focStep() can
-  // be requested at 5 kHz with every module initialised.
-  startControlTimer();
-  logEvent("TorqueTwin v2 ready (5 kHz timer FOC). Serial keys: g=start, x=stop, m=MCSA, s=status, c=recalibrate.");
-}
-
-void loop() {
   server.handleClient();
 
   if (ctrlTick) {                          // one 5 kHz tick due
