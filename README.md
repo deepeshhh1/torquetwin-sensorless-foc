@@ -11,6 +11,7 @@ This is the control technique inside every serious EV drive, taken one level fur
 - PI current loops with d-q decoupling + voltage-circle limiting, **SVPWM** output
 - **Sliding Mode Observer (SMO)** estimates back-EMF from the motor model `v = Ri + L·di/dt + e`; a tracking **PLL** converts it into a clean rotor angle and speed
 - Open-loop I/f start-up ramp, automatic handover to the observer once back-EMF locks
+- Control loop runs on a **5 kHz hardware timer**; current-sensor offsets are **auto-calibrated at boot** (300 samples per channel, driver disabled)
 
 ### 2. Digital twin
 - A d-q PMSM model (`Ld/Lq`, flux, inertia, friction) integrates the same voltage commands in parallel
@@ -18,17 +19,22 @@ This is the control technique inside every serious EV drive, taken one level fur
 
 ### 3. MCSA predictive maintenance
 - 1024-point FFT of a phase current at steady speed
-- Fault index from the **sidebands around the fundamental** at (1 ± 2s)·f — the classic broken-rotor-bar / eccentricity signature — graded HEALTHY / WATCH / FAULT
+- Fault index from the **sidebands around the fundamental** at (1 ± 2s)·f — the classic broken-rotor-bar / eccentricity signature — graded HEALTHY / WATCH / FAULT, plus 3rd/5th harmonic levels
 
-## 📂 In this repo
+## 📂 In this repo (multi-file firmware)
 
-- `TorqueTwin_FOC.ino` — complete firmware (FOC + SMO + PLL, digital twin, MCSA, dashboard)
+- `TorqueTwin_FOC.ino` — main sketch: 5 kHz timer control loop, boot auto-calibration, dashboard
+- `config.h` — motor parameters, pins, PWM/control constants, PI + observer gains
+- `foc.h` — PI controllers, Clarke/Park transforms, SVPWM, voltage limiting, open-loop ramp
+- `observer.h` — sliding-mode observer + tracking PLL (rotor angle/speed estimation)
+- `twin.h` — the real-time d-q digital twin and deviation monitor
+- `mcsa.h` — FFT current-signature analysis (fault index, harmonics, verdict)
 - `components.md` — component list with the role of each part
 - `tuning-guide.md` — motor parameter identification and the tuning sequence that actually works
 
 ## 🖥️ Dashboard
 
-Live speed, i_d / i_q, DC-bus voltage, observer lock state, twin deviation %, MCSA verdict, a speed trend chart, speed slider and START/STOP — all served by the ESP32.
+Live speed, i_d / i_q, DC-bus voltage, observer lock state + lock quality, twin deviation %, MCSA verdict, calibration status, a speed trend chart, speed slider and START/STOP — all served by the ESP32.
 
 ## ⚠️ Safety
 
