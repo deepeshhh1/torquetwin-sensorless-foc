@@ -36,6 +36,31 @@ This is the control technique inside every serious EV drive, taken one level fur
 
 Live speed, i_d / i_q, DC-bus voltage, observer lock state + lock quality, twin deviation %, MCSA verdict, calibration status, a speed trend chart, speed slider and START/STOP — all served by the ESP32.
 
+## 📚 Required libraries
+
+Board support (once): **esp32 by Espressif Systems** — Arduino IDE → Boards Manager.
+
+| Library | Used for | Install (Library Manager search) |
+| --- | --- | --- |
+| arduinoFFT (Enrique Condes) | MCSA current-spectrum analysis (1024-point FFT) | `arduinoFFT` |
+
+Built into the ESP32 core, no install needed: `WiFi`, `WebServer`.
+
+## 🔌 Wiring — pin connections (ESP32)
+
+| ESP32 pin | Connects to | Notes |
+| --- | --- | --- |
+| GPIO25 | Gate driver PWM input — phase A | LEDC channel 0, 20 kHz |
+| GPIO26 | Gate driver PWM input — phase B | LEDC channel 1, 20 kHz |
+| GPIO27 | Gate driver PWM input — phase C | LEDC channel 2, 20 kHz |
+| GPIO14 | Gate driver ENABLE | LOW = driver disabled (boot calibration runs with it LOW) |
+| GPIO34 | ACS712 output — phase A current | ADC1 (works with Wi-Fi on) |
+| GPIO35 | ACS712 output — phase B current | ADC1 — phase C current is computed (−(ia+ib)) |
+| GPIO32 | DC-bus voltage divider output | ADC1 |
+| GND | Driver / sensor ground | Common ground throughout |
+
+Gate driver: a 3-phase driver board (e.g. DRV8302-class) between the ESP32 PWM pins and the MOSFET bridge.
+
 ## ⚠️ Safety
 
 Real power hardware: develop on a current-limited 24 V-class bench supply, respect the gate driver's own protections, and keep clear of spinning machinery.
